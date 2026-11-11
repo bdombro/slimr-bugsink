@@ -1,7 +1,7 @@
 #pragma once
 
-#include "slimr/curl.hpp"
-#include "slimr/json.hpp"
+#include "curl.hpp"
+#include "json.hpp"
 
 #include <chrono>
 #include <cstdlib>

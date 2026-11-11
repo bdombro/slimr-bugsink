@@ -1,6 +1,6 @@
 #define SLIMR_TEST_MAIN
-#include "slimr/test.hpp"
-#include "slimr/bugsink.hpp"
+#include "test.hpp"
+#include "bugsink.hpp"
 #include <sstream>
 
 using namespace slimr;
