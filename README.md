@@ -58,13 +58,31 @@ int main() {
 | `reportError` | `bool reportError(const std::exception& err, const Json& extra = Json::object_t{})` | Reports a standard C++ exception with optional extra metadata. Returns `true` on success. |
 | `reportMessage` | `bool reportMessage(std::string_view message, std::string_view level = "warning", const Json& extra = Json::object_t{})` | Reports a log message with severity level and optional extra metadata. |
 
-## Build & Test
+## Install
 
-This folder owns its header, `test.cpp`, CMake target/config, manifest, port recipe and licenses. See the [integration guide](../../README.md#integration-vcpkg--cmakeninja).
+Add `bdombro/slimr-bugsink` to `vcpkg-configuration.json`:
 
-```bash
-just test-pkg bugsink  # From the repository root; automatic native deps + ASan/UBSan
-just build            # All optimized Release suites
+```json
+{
+  "kind": "git",
+  "repository": "https://github.com/bdombro/slimr-bugsink",
+  "baseline": "<commit-sha>",
+  "packages": [
+    "slimr-bugsink"
+  ]
+}
 ```
 
-Generated output stays under root `build/deps/` and `build/cmake/{Debug,Release}/`. Consumers link `slimr::bugsink` from `find_package(slimr-bugsink CONFIG REQUIRED)`. The optional manifest `tests` feature keeps test dependencies out of production consumption.
+Declare `slimr-bugsink` in `vcpkg.json` and link `slimr::bugsink` in `CMakeLists.txt`:
+
+```cmake
+find_package(slimr-bugsink CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE slimr::bugsink)
+```
+
+## Build & Test
+
+```bash
+just test   # Debug build (ASan + UBSan) and run tests
+just build  # Optimized Release build
+```

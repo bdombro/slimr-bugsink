@@ -1,0 +1,26 @@
+{
+  "name": "slimr-bugsink",
+  "version": "0.1.1",
+  "description": "Header-only Bugsink and Sentry error reporting",
+  "dependencies": [
+    {
+      "name": "slimr-curl",
+      "version>=": "0.1.1"
+    },
+    {
+      "name": "slimr-json",
+      "version>=": "0.1.1"
+    }
+  ],
+  "features": {
+    "tests": {
+      "description": "Dependencies for the standalone test suite",
+      "dependencies": [
+        {
+          "name": "slimr-test",
+          "version>=": "0.1.1"
+        }
+      ]
+    }
+  }
+}
