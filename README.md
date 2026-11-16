@@ -13,12 +13,12 @@ Borrowed directly from the design of [`@slimr/bugsink`](https://www.npmjs.com/pa
 
 ## Install
 
-Add `bdombro/slimr-bugsink` to `vcpkg-configuration.json`:
+Add `slimr-down-now/bugsink` to `vcpkg-configuration.json`:
 
 ```json
 {
   "kind": "git",
-  "repository": "https://github.com/bdombro/slimr-bugsink",
+  "repository": "https://github.com/slimr-down-now/bugsink",
   "baseline": "<commit-sha>",
   "packages": [
     "slimr-bugsink"
