@@ -1,6 +1,6 @@
 # slimr::bugsink
 
-Lightweight C++26 Bugsink / Sentry error reporting client built on top of `slimr::curl` and `slimr::json`, featuring DSN parsing, Sentry envelope formatting, and exception reporting.
+Lightweight C++26 Bugsink / Sentry error reporting client built on top of `cpp-httplib` and `slimr::json`, featuring DSN parsing, Sentry envelope formatting, and exception reporting.
 
 Borrowed directly from the design of [`@slimr/bugsink`](https://www.npmjs.com/package/@slimr/bugsink).
 

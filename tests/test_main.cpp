@@ -1,7 +1,9 @@
 #define SLIMR_TEST_MAIN
 #include "bugsink.hpp"
 #include "test.hpp"
+#include <mutex>
 #include <sstream>
+#include <thread>
 
 using namespace slimr;
 
@@ -64,5 +66,50 @@ TEST_SUITE("slimr::bugsink") {
         CHECK(!errNoRel.contains("release"));
         auto msgNoRel = withoutRelease.buildMessagePayload("hi", "info", "ev4", "2026-11-15T00:00:00Z");
         CHECK(!msgNoRel.contains("release"));
+    }
+
+    TEST_CASE("reportError and reportMessage POST envelope and swallow failures") {
+        httplib::Server svr;
+        std::mutex mu;
+        std::vector<std::string> contentTypes;
+        std::vector<std::string> bodies;
+        std::vector<std::string> keys;
+
+        svr.Post("/api/42/envelope/", [&](const httplib::Request &req, httplib::Response &res) {
+            std::lock_guard lock(mu);
+            contentTypes.push_back(req.get_header_value("Content-Type"));
+            bodies.push_back(req.body);
+            keys.push_back(req.get_param_value("sentry_key"));
+            res.status = 200;
+        });
+
+        int port = svr.bind_to_any_port("127.0.0.1");
+        REQUIRE(port > 0);
+        std::thread serverThread([&]() { svr.listen_after_bind(); });
+        svr.wait_until_ready();
+
+        std::string dsn = "http://key42@127.0.0.1:" + std::to_string(port) + "/42";
+        BugsinkReporter reporter(dsn, "TEST_UNSET_BUGSINK_DSN");
+
+        CHECK(reporter.reportError(std::runtime_error("boom")) == true);
+        CHECK(reporter.reportMessage("warn msg", "warning") == true);
+
+        svr.stop();
+        serverThread.join();
+
+        {
+            std::lock_guard lock(mu);
+            REQUIRE(bodies.size() == 2);
+            CHECK(contentTypes[0] == "text/plain;charset=UTF-8");
+            CHECK(contentTypes[1] == "text/plain;charset=UTF-8");
+            CHECK(keys[0] == "key42");
+            CHECK(keys[1] == "key42");
+            CHECK(bodies[0].find("boom") != std::string::npos);
+            CHECK(bodies[1].find("warn msg") != std::string::npos);
+        }
+
+        // Unreachable server returns false without throwing
+        CHECK(reporter.reportError(std::runtime_error("unreachable")) == false);
+        CHECK(reporter.reportMessage("unreachable") == false);
     }
 }

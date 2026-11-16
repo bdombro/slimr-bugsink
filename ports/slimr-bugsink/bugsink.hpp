@@ -1,11 +1,11 @@
 #pragma once
 
-#include "curl.hpp"
 #include "json.hpp"
 
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
+#include <httplib.h>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -169,8 +169,8 @@ class BugsinkReporter {
     }
 
     bool reportError(const std::exception &err, const Json &extra = Json::object_t{}) {
-        std::string url = envelopeUrl();
-        if (url.empty())
+        auto parsed = parseDsn(effectiveDsn());
+        if (!parsed.valid)
             return false;
 
         std::string eventId = detail::generate_uuid_hex();
@@ -179,25 +179,12 @@ class BugsinkReporter {
         Json payload = buildErrorPayload(err, eventId, ts, extra);
 
         std::string body = formatEnvelope(payload, eventId, ts);
-
-        try {
-            HttpRequest req;
-            req.method = "POST";
-            req.url = url;
-            req.headers["Content-Type"] = "text/plain;charset=UTF-8";
-            req.body = std::move(body);
-            req.timeoutMs = 5000;
-            (void)request(req);
-            return true;
-        } catch (...) {
-            // Reporting must never fail the caller
-            return false;
-        }
+        return postEnvelope(parsed, body);
     }
 
     bool reportMessage(std::string_view message, std::string_view level = "warning", const Json &extra = Json::object_t{}) {
-        std::string url = envelopeUrl();
-        if (url.empty())
+        auto parsed = parseDsn(effectiveDsn());
+        if (!parsed.valid)
             return false;
 
         std::string eventId = detail::generate_uuid_hex();
@@ -206,22 +193,28 @@ class BugsinkReporter {
         Json payload = buildMessagePayload(message, level, eventId, ts, extra);
 
         std::string body = formatEnvelope(payload, eventId, ts);
+        return postEnvelope(parsed, body);
+    }
 
+  private:
+    static bool postEnvelope(const ParsedDsn &parsed, const std::string &body) {
         try {
-            HttpRequest req;
-            req.method = "POST";
-            req.url = url;
-            req.headers["Content-Type"] = "text/plain;charset=UTF-8";
-            req.body = std::move(body);
-            req.timeoutMs = 5000;
-            (void)request(req);
-            return true;
+            httplib::Client cli(parsed.protocol + "://" + parsed.host);
+            if (!cli.is_valid())
+                return false;
+            cli.set_connection_timeout(5, 0);
+            cli.set_read_timeout(5, 0);
+            cli.set_write_timeout(5, 0);
+            std::string pathAndQuery = "/api/" + parsed.projectId +
+                                       "/envelope/?sentry_key=" + parsed.publicKey + "&sentry_version=7";
+            auto res = cli.Post(pathAndQuery, body, "text/plain;charset=UTF-8");
+            return static_cast<bool>(res);
         } catch (...) {
+            // Reporting must never fail the caller
             return false;
         }
     }
 
-  private:
     std::string default_dsn_;
     std::string env_var_;
     std::string release_;

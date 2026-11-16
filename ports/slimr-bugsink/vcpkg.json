@@ -4,8 +4,11 @@
   "description": "Header-only Bugsink and Sentry error reporting",
   "dependencies": [
     {
-      "name": "slimr-curl",
-      "version>=": "0.1.1"
+      "name": "cpp-httplib",
+      "default-features": false,
+      "features": [
+        "openssl"
+      ]
     },
     {
       "name": "slimr-json",
