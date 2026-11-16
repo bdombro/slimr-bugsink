@@ -1,4 +1,4 @@
-# slimr::bugsink (`packages/bugsink`)
+# slimr::bugsink
 
 Lightweight C++26 Bugsink / Sentry error reporting client built on top of `slimr::curl` and `slimr::json`, featuring DSN parsing, Sentry envelope formatting, and exception reporting.
 
@@ -11,7 +11,27 @@ Borrowed directly from the design of [`@slimr/bugsink`](https://www.npmjs.com/pa
 - **Safe Exception Catching:** Designed so error reporting failures never crash or throw exceptions into user application logic.
 - **Extra Context Support:** Attach arbitrary metadata and context dicts to exceptions or warning messages.
 
----
+## Install
+
+Add `bdombro/slimr-bugsink` to `vcpkg-configuration.json`:
+
+```json
+{
+  "kind": "git",
+  "repository": "https://github.com/bdombro/slimr-bugsink",
+  "baseline": "<commit-sha>",
+  "packages": [
+    "slimr-bugsink"
+  ]
+}
+```
+
+Declare `slimr-bugsink` in `vcpkg.json` and link `slimr::bugsink` in `CMakeLists.txt`:
+
+```cmake
+find_package(slimr-bugsink CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE slimr::bugsink)
+```
 
 ## Quick Start
 
@@ -58,31 +78,12 @@ int main() {
 | `reportError` | `bool reportError(const std::exception& err, const Json& extra = Json::object_t{})` | Reports a standard C++ exception with optional extra metadata. Returns `true` on success. |
 | `reportMessage` | `bool reportMessage(std::string_view message, std::string_view level = "warning", const Json& extra = Json::object_t{})` | Reports a log message with severity level and optional extra metadata. |
 
-## Install
+## Environment Variables
 
-Add `bdombro/slimr-bugsink` to `vcpkg-configuration.json`:
+| Name | Required | Purpose |
+| --- | --- | --- |
+| `BUGSINK_DSN` | Optional | Default Bugsink DSN read when `BugsinkReporter` is constructed with an empty `dsn` argument. |
 
-```json
-{
-  "kind": "git",
-  "repository": "https://github.com/bdombro/slimr-bugsink",
-  "baseline": "<commit-sha>",
-  "packages": [
-    "slimr-bugsink"
-  ]
-}
-```
+## Development
 
-Declare `slimr-bugsink` in `vcpkg.json` and link `slimr::bugsink` in `CMakeLists.txt`:
-
-```cmake
-find_package(slimr-bugsink CONFIG REQUIRED)
-target_link_libraries(my_target PRIVATE slimr::bugsink)
-```
-
-## Build & Test
-
-```bash
-just test   # Debug build (ASan + UBSan) and run tests
-just build  # Optimized Release build
-```
+See [docs/development.md](docs/development.md) for building, testing, linting, and releasing.
